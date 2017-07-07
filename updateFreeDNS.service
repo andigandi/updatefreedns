@@ -1,0 +1,8 @@
+[Unit]
+Description=Update FreeDNS periodically
+
+[Service]
+ExecStart=/usr/bin/updatefreedns
+
+[Install]
+WantedBy=multi-user.target 
