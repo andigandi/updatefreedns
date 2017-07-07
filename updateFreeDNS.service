@@ -2,7 +2,7 @@
 Description=Update FreeDNS periodically
 
 [Service]
-ExecStart=/usr/bin/updatefreedns
+ExecStart=/usr/bin/updateFreeDNS
 
 [Install]
 WantedBy=multi-user.target 

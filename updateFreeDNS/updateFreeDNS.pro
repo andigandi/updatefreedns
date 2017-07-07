@@ -1,9 +1,12 @@
+TARGET = updateFreeDNS
+target.path = /usr/bin/
+INSTALLS += target
+
 QT += core network
 QT -= gui
 
 CONFIG += c++11
 
-TARGET = updateFreeDNS
 CONFIG += console
 CONFIG -= app_bundle
 
@@ -14,6 +17,12 @@ SOURCES += main.cpp \
     updater.cpp \
     manager.cpp \
     filedownloader.cpp
+
+HEADERS += \
+    standardstreams.h \
+    updater.h \
+    manager.h \
+    filedownloader.h
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -27,9 +36,3 @@ DEFINES += QT_DEPRECATED_WARNINGS
 DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000 # disables all the APIs deprecated before Qt 6.0.0
 
 DEFINES += TARGET=\\\"$${TARGET}\\\"
-
-HEADERS += \
-    standardstreams.h \
-    updater.h \
-    manager.h \
-    filedownloader.h
