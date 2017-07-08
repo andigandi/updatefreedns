@@ -84,7 +84,7 @@ Updater::Updater(const QString name, const bool enabled, const QString protocol,
 
 void Updater::update()
 {
-    if (this->valid)
+    if (this->valid && this->enabled)
     {
         if (this->updateInProgress.tryLock())
         {
