@@ -26,7 +26,7 @@ Updater::Updater(const QString name, const bool enabled, const bool verbose, con
     {
         settingsProtocol = Protocol::None;
         this->valid = false;
-        this->out->writeErr(tr("Invalid Protocol!"));
+        this->out->writeErr(tr("Invalid Protocol."));
     }
     switch (settingsProtocol)
     {
@@ -44,7 +44,7 @@ Updater::Updater(const QString name, const bool enabled, const bool verbose, con
     if (this->updateURL.count() < 1)
     {
         this->valid = false;
-        this->out->writeErr(tr("Invalid UpdateURL!"));
+        this->out->writeErr(tr("Invalid UpdateURL."));
     }
 
     // Address Source
@@ -52,23 +52,28 @@ Updater::Updater(const QString name, const bool enabled, const bool verbose, con
     if (!this->addressSource.isValid())
     {
         this->valid = false;
-        this->out->writeErr(tr("Invalid Source! %1").arg(this->addressSource.errorString()));
+        this->out->writeErr(tr("Invalid Source. %1").arg(this->addressSource.errorString()));
     }
 
     // Domain
     if (this->domain.count() < 1)
     {
         this->valid = false;
-        this->out->writeErr(tr("Invalid Domain!"));
+        this->out->writeErr(tr("Invalid Domain."));
     }
 
     if (this->valid)
     {
-        this->out->writeOut(tr("uccessfully initialized!"));
+        this->out->writeOut(tr("Successfully initialized."));
     }
     else
     {
-        this->out->writeOut(tr("uccessfully initialized!"));
+        this->out->writeErr(tr("Marked as invalid."));
+    }
+
+    if (!this->enabled)
+    {
+        this->out->writeOut(tr("Disabling."));
     }
 }
 
@@ -78,7 +83,7 @@ void Updater::update()
     {
         if (this->updateInProgress.tryLock())
         {
-            this->download = new FileDownloader(this->addressSource, true);
+            this->download = new FileDownloader(this->addressSource, this->verbose);
             connect(this->download, &FileDownloader::downloaded, this, &Updater::onCurrentAddressDownloaded);
         }
         else
@@ -116,7 +121,7 @@ void Updater::onCurrentAddressDownloaded(QNetworkReply::NetworkError error)
         {
             this->out->writeOut(tr("Updating to %1.").arg(this->currentAddress.toString()));
 
-            this->download = new FileDownloader(QUrl(this->updateURL.arg(this->currentAddress.toString())), true);
+            this->download = new FileDownloader(QUrl(this->updateURL.arg(this->currentAddress.toString())), this->verbose);
             connect(this->download, &FileDownloader::downloaded, this, &Updater::onDNSUpdated);
         }
         else
