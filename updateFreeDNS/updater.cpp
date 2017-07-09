@@ -1,17 +1,17 @@
 #include "updater.h"
 #include <QHostInfo>
 #include <QMetaEnum>
-#include "standardstreams.h"
 #include "filedownloader.h"
 
-Updater::Updater(const QString name, const bool enabled, const QString protocol, const QString updateURL, const QString addressSource, const QString domain) :
+Updater::Updater(const QString name, const bool enabled, const bool verbose, const QString protocol, const QString updateURL, const QString addressSource, const QString domain) :
     name(name),
     enabled(enabled),
+    verbose(verbose),
     updateURL(updateURL),
     addressSource(addressSource),
     domain(domain)
 {
-    this->prefix = tr("Updater %1: ").arg(this->name);
+    this->out = new Output(tr("Updater %1").arg(this->name), this);
     bool ok = true;
     const char * cProtocol = reinterpret_cast<const char *>(protocol.toLatin1().data()); // This might fuck the encoding but should work for ASCII
 
@@ -26,9 +26,7 @@ Updater::Updater(const QString name, const bool enabled, const QString protocol,
     {
         settingsProtocol = Protocol::None;
         this->valid = false;
-        StandardStreams::lock();
-        StandardStreams::err << this->prefix << tr("Invalid Protocol!") << endl;
-        StandardStreams::unlock();
+        this->out->writeErr(tr("Invalid Protocol!"));
     }
     switch (settingsProtocol)
     {
@@ -46,9 +44,7 @@ Updater::Updater(const QString name, const bool enabled, const QString protocol,
     if (this->updateURL.count() < 1)
     {
         this->valid = false;
-        StandardStreams::lock();
-        StandardStreams::err << this->prefix << tr("Invalid UpdateURL!") << endl;
-        StandardStreams::unlock();
+        this->out->writeErr(tr("Invalid UpdateURL!"));
     }
 
     // Address Source
@@ -56,30 +52,24 @@ Updater::Updater(const QString name, const bool enabled, const QString protocol,
     if (!this->addressSource.isValid())
     {
         this->valid = false;
-        StandardStreams::lock();
-        StandardStreams::err << this->prefix << tr("Invalid Source! %1").arg(this->addressSource.errorString()) << endl;
-        StandardStreams::unlock();
+        this->out->writeErr(tr("Invalid Source! %1").arg(this->addressSource.errorString()));
     }
 
     // Domain
     if (this->domain.count() < 1)
     {
         this->valid = false;
-        StandardStreams::lock();
-        StandardStreams::err << this->prefix << tr("Invalid Domain!") << endl;
-        StandardStreams::unlock();
+        this->out->writeErr(tr("Invalid Domain!"));
     }
 
-    StandardStreams::lock();
     if (this->valid)
     {
-        StandardStreams::out << this->prefix << tr("Successfully initialized!") << endl;
+        this->out->writeOut(tr("uccessfully initialized!"));
     }
     else
     {
-        StandardStreams::out << this->prefix << tr("Marked as invalid.") << endl;
+        this->out->writeOut(tr("uccessfully initialized!"));
     }
-    StandardStreams::unlock();
 }
 
 void Updater::update()
@@ -88,14 +78,12 @@ void Updater::update()
     {
         if (this->updateInProgress.tryLock())
         {
-            this->download = new FileDownloader(this->addressSource);
+            this->download = new FileDownloader(this->addressSource, true);
             connect(this->download, &FileDownloader::downloaded, this, &Updater::onCurrentAddressDownloaded);
         }
         else
         {
-            StandardStreams::lock();
-            StandardStreams::err << this->prefix << tr("Update already in progress, skipping. Consider checking the interval settings.") << endl;
-            StandardStreams::unlock();
+            this->out->writeErr(tr("Update already in progress, skipping. Consider checking the interval settings."));
         }
     }
 }
@@ -111,11 +99,14 @@ void Updater::onCurrentAddressDownloaded(QNetworkReply::NetworkError error)
         const QList<QHostAddress> dnsAddresses = this->getDNSAddresses();
         this->currentAddress = QHostAddress(QString::fromLatin1(this->download->getDownloadedData()));
 
+        if (this->verbose) this->out->writeOut(tr("Current address is %1.").arg(this->currentAddress.toString()));
+
         // Count the matches between current address and addresses found in DNS
         for (const QHostAddress addr : dnsAddresses)
         {
             if (addr == this->currentAddress)
             {
+                if (this->verbose) this->out->writeOut(tr("Current address matches DNS entry %1.").arg(addr.toString()));
                 matchesFound++;
             }
         }
@@ -123,11 +114,9 @@ void Updater::onCurrentAddressDownloaded(QNetworkReply::NetworkError error)
         // Update if no matches were found
         if (!matchesFound)
         {
-            StandardStreams::lock();
-            StandardStreams::out << this->prefix << tr("Updating to %1.").arg(this->currentAddress.toString()) << endl;
-            StandardStreams::unlock();
+            this->out->writeOut(tr("Updating to %1.").arg(this->currentAddress.toString()));
 
-            this->download = new FileDownloader(QUrl(this->updateURL.arg(this->currentAddress.toString())));
+            this->download = new FileDownloader(QUrl(this->updateURL.arg(this->currentAddress.toString())), true);
             connect(this->download, &FileDownloader::downloaded, this, &Updater::onDNSUpdated);
         }
         else
@@ -137,9 +126,7 @@ void Updater::onCurrentAddressDownloaded(QNetworkReply::NetworkError error)
     }
     else
     {
-        StandardStreams::lock();
-        StandardStreams::err << this->prefix << tr("Error retrieving current IP.") << endl;
-        StandardStreams::unlock();
+        this->out->writeErr(tr("Error retrieving current IP."));
         this->updateInProgress.unlock();
     }
 }
@@ -151,15 +138,11 @@ void Updater::onDNSUpdated(QNetworkReply::NetworkError error)
 
     if (error == QNetworkReply::NoError)
     {
-            StandardStreams::lock();
-            StandardStreams::out << this->prefix << tr("Update finished.") << endl;
-            StandardStreams::unlock();
+        this->out->writeOut(tr("Update finished."));
     }
     else
     {
-        StandardStreams::lock();
-        StandardStreams::err << this->prefix << tr("Error updating DNS entry.") << endl;
-        StandardStreams::unlock();
+        this->out->writeErr(tr("Error updating DNS entry."));
     };
     this->updateInProgress.unlock();
 }
@@ -175,6 +158,7 @@ QList<QHostAddress> Updater::getDNSAddresses()
         {
             if (addr.protocol() == this->protocol)
             {
+                if (this->verbose) this->out->writeOut(tr("Found DNS entry %1.").arg(addr.toString()));
                 addresses << addr;
             }
         }

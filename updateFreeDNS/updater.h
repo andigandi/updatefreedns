@@ -8,6 +8,7 @@
 #include <QNetworkReply>
 #include <QMutex>
 #include "filedownloader.h"
+#include "output.h"
 
 class Updater : public QObject
 {
@@ -17,7 +18,7 @@ public:
     enum class Protocol {IPv4, IPv6, None = -1};
     //Q_ENUM(Protocol)
 
-    explicit Updater(const QString name, const bool enabled, const QString protocol, const QString updateURL, const QString addressSource, const QString domain);
+    explicit Updater(const QString name, const bool enabled, const bool verbose, const QString protocol, const QString updateURL, const QString addressSource, const QString domain);
 
 signals:
 
@@ -30,12 +31,13 @@ public slots:
 private:
     QString name;
     bool enabled;
+    bool verbose;
     QString updateURL;
     QUrl addressSource;
     QString domain;
     QAbstractSocket::NetworkLayerProtocol protocol;
 
-    QString prefix;
+    Output *out;
 
     bool valid = true;
     QMutex updateInProgress;

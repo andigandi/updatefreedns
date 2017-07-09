@@ -13,16 +13,16 @@ CONFIG -= app_bundle
 TEMPLATE = app
 
 SOURCES += main.cpp \
-    standardstreams.cpp \
     updater.cpp \
     manager.cpp \
-    filedownloader.cpp
+    filedownloader.cpp \
+    output.cpp
 
 HEADERS += \
-    standardstreams.h \
     updater.h \
     manager.h \
-    filedownloader.h
+    filedownloader.h \
+    output.h
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings

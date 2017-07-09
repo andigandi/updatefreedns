@@ -21,6 +21,7 @@ public slots:
     void updateTimerInterval();
 
 private:
+    Output *out;
     QSettings *settings;
     QTimer timer;
 
@@ -29,7 +30,6 @@ private:
     static const QString fileName;
     static const QString directory;
 
-    static const QString prefix;
     static const QString name;
 
     static const int keyTimerDefault = 30;
@@ -41,6 +41,8 @@ private:
 
     static const QString updaterKeyEnabled;
     static const bool updaterKeyEnabledDefault = false;
+    static const QString updaterKeyVerbose;
+    static const bool updaterKeyVerboseDefault = false;
     static const QString updaterKeyProtocol;
     static const QString updaterKeyUpdateURL;
     static const QString updaterKeyAddressSource;
