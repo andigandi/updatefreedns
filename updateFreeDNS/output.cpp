@@ -1,13 +1,14 @@
 #include "output.h"
 #include <iostream>
+#include <QMutexLocker>
 
-QTextStream Output::out(stdout);
-QTextStream Output::err(stderr);
+QTextStream Output::out{stdout};
+QTextStream Output::err{stderr};
 
 QMutex Output::mutex;
 
 Output::Output(const QString prefix, QObject *parent) : QObject(parent),
-    prefix(prefix)
+    prefix{prefix}
 {
 
 }
@@ -24,7 +25,6 @@ void Output::writeErr(const QString text)
 
 void Output::write(QTextStream *stream, const QString text)
 {
-    Output::mutex.lock();
+    QMutexLocker locker{&Output::mutex};
     *stream << this->prefix << QStringLiteral(": ") << text << endl;
-    Output::mutex.unlock();
 }

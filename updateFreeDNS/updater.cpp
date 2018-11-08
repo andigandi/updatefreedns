@@ -133,11 +133,13 @@ void Updater::onCurrentAddressDownloaded(QNetworkReply::NetworkError error)
                 else
                 {
                     this->out->writeOut(tr("Mismatch between address %1 and desired protocol.").arg(this->currentAddress.toString()));
+                    this->updateInProgress.unlock();
                 }
             }
             else
             {
                 this->out->writeOut(tr("Not updating, address did not change (%1).").arg(this->currentAddress.toString()));
+                this->updateInProgress.unlock();
             }
         }
         else

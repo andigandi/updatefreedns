@@ -2,7 +2,7 @@
 #include <QNetworkRequest>
 
 FileDownloader::FileDownloader(QUrl url, const bool verbose, QObject *parent) : QObject(parent),
-    verbose(verbose)
+    verbose{verbose}
 {
     this->out = new Output(tr("File Downloader: %1").arg(url.toString()), this);
 
