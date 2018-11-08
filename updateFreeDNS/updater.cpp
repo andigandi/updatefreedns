@@ -4,12 +4,14 @@
 #include "filedownloader.h"
 
 Updater::Updater(const QString name, const bool enabled, const bool verbose, const QString protocol, const QString updateURL, const QString addressSource, const QString domain) :
-    name(name),
-    enabled(enabled),
-    verbose(verbose),
-    updateURL(updateURL),
-    addressSource(addressSource),
-    domain(domain)
+    name{name},
+    enabled{enabled},
+    verbose{verbose},
+    updateURL{updateURL},
+    addressSource{addressSource},
+    domain{domain},
+    currentAddress{},
+    lastAddress{}
 {
     this->out = new Output(tr("Updater %1").arg(this->name), this);
     bool ok = true;
@@ -119,10 +121,24 @@ void Updater::onCurrentAddressDownloaded(QNetworkReply::NetworkError error)
         // Update if no matches were found
         if (!matchesFound)
         {
-            this->out->writeOut(tr("Updating to %1.").arg(this->currentAddress.toString()));
+            if (this->currentAddress != this->lastAddress)
+            {
+                if (this->protocol == this->currentAddress.protocol())
+                {
+                    this->out->writeOut(tr("Updating to %1.").arg(this->currentAddress.toString()));
 
-            this->download = new FileDownloader(QUrl(this->updateURL.arg(this->currentAddress.toString())), this->verbose);
-            connect(this->download, &FileDownloader::downloaded, this, &Updater::onDNSUpdated);
+                    this->download = new FileDownloader(QUrl(this->updateURL.arg(this->currentAddress.toString())), this->verbose);
+                    connect(this->download, &FileDownloader::downloaded, this, &Updater::onDNSUpdated);
+                }
+                else
+                {
+                    this->out->writeOut(tr("Mismatch between address %1 and desired protocol.").arg(this->currentAddress.toString()));
+                }
+            }
+            else
+            {
+                this->out->writeOut(tr("Not updating, address did not change (%1).").arg(this->currentAddress.toString()));
+            }
         }
         else
         {
@@ -143,6 +159,7 @@ void Updater::onDNSUpdated(QNetworkReply::NetworkError error)
 
     if (error == QNetworkReply::NoError)
     {
+        this->lastAddress = this->currentAddress;
         this->out->writeOut(tr("Update finished."));
     }
     else

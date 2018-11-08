@@ -39,12 +39,13 @@ private:
 
     Output *out;
 
-    bool valid = true;
+    bool valid{true};
     QMutex updateInProgress;
 
-    FileDownloader *download = nullptr;
+    FileDownloader *download{nullptr};
 
     QHostAddress currentAddress;
+    QHostAddress lastAddress;
 
     QList<QHostAddress> getDNSAddresses();
 };

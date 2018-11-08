@@ -5,7 +5,7 @@ INSTALLS += target
 QT += core network
 QT -= gui
 
-CONFIG += c++11
+CONFIG += c++14
 
 CONFIG += console
 CONFIG -= app_bundle
